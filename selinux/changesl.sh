@@ -1,5 +1,15 @@
 #!/bin/bash
 
+access=$(sudo -nv 2>&1)
+if [ $? -eq 0 ]; then
+  echo "Access granded"
+elif echo $access | grep -q '^sudo:'; then
+  echo "Access granded"
+else
+  echo "You don't have sudo permissions"
+  exit -1
+fi
+
 status=$(getenforce)
 cfg=$(cat /etc/selinux/config | grep "^SELINUX=" | sed 's/^SELINUX=//g')
 
@@ -21,7 +31,7 @@ elif [[ ( "$answer" == "y" ) && ( "$status" == "Disabled" ) || ( "$status" == "P
   sudo setenforce 1
   echo "SELinux enabled"
 else
-  echo "Wrong answer"
+  exit 0
 fi
 
 if [[ "$cfg" == "enforcing" ]]; then
@@ -36,12 +46,11 @@ if [[ ( "$cfganswer" == "y" ) && ( "$cfg" == "enforcing" ) ]]; then
   sudo sed 's/^SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config | sudo tee /etc/selinux/config > /dev/null
   echo "SELinux in config is disabled"
 elif [[ ( "$cfganswer" == "y" ) && ( "$cfg" == "disabled" ) ]]; then
-  sudo sed 's/^SELINUX=disabled/SELINUX=enforcing/g' /etc/selinux/config | sudo tee /etc/selinux/config > /dev/nul
-l
+  sudo sed 's/^SELINUX=disabled/SELINUX=enforcing/g' /etc/selinux/config | sudo tee /etc/selinux/config > /dev/null
   echo "SELinux in config is enabled"
 elif [[ ( "$cfganswer" == "y" ) && ( "$cfg" == "permissive" ) ]]; then
-  sudo sed 's/^SELINUX=permissive/SELINUX=enforcing/g' /etc/selinux/config | sudo tee /etc/selinux/config > /dev/nul
+  sudo sed 's/^SELINUX=permissive/SELINUX=enforcing/g' /etc/selinux/config | sudo tee /etc/selinux/config > /dev/null
   echo "SELinux in config in enabled"
 else
-  echo "Wrong answer"
+  exit 0
 fi
